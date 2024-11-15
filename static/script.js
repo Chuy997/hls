@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var video = document.getElementById('videoPlayer');
     var hls;
 
-    // Function to load the stream
+    // Función para cargar el stream HLS
     function loadStream(url) {
         if (Hls.isSupported()) {
             hls = new Hls();
@@ -43,9 +43,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
+    // URLs para el stream HLS
     var primaryUrl = 'http://10.232.118.72:5001/static/hls/index.m3u8';
     var secondaryUrl = 'http://192.168.1.172:5001/static/hls/index.m3u8';
 
+    // Carga el stream desde la URL primaria o secundaria
     fetch(primaryUrl, { method: 'HEAD' })
         .then(() => {
             console.log("Cargando la URL primaria:", primaryUrl);
@@ -62,6 +64,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    // --- Contador de incidencias ---
     const counterValue = document.getElementById('counter-value');
 
     function updateIncidenceCounter() {
@@ -75,35 +78,54 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    // Update counter on page load
+    // Actualiza el contador al cargar la página
     updateIncidenceCounter();
 
-    // Update counter every 10 seconds
+    // Actualiza el contador cada 10 segundos
     setInterval(updateIncidenceCounter, 10000);
 
-    // --- Nueva funcionalidad para la gráfica de incidencias diarias ---
+    // --- Configuración dinámica de Chart.js ---
+    const isLocalNetwork = location.hostname.startsWith("10.232.118");
+    const chartJsUrl = isLocalNetwork
+        ? "http://10.232.118.72:5001/static/libs/chart.js"
+        : "http://192.168.1.172:5001/static/libs/chart.js";
+
+    // Agregar dinámicamente el script de Chart.js
+    const chartJsScript = document.createElement("script");
+    chartJsScript.src = chartJsUrl;
+    chartJsScript.defer = true;
+    document.head.appendChild(chartJsScript);
+
+    chartJsScript.onload = function () {
+        console.log("Chart.js cargado correctamente.");
+        initializeChart();
+    };
+
+    chartJsScript.onerror = function () {
+        console.error("Error al cargar Chart.js desde " + chartJsUrl);
+    };
+
+    // --- Función para inicializar la gráfica ---
     const weeklyChartCtx = document.getElementById('weeklyChart').getContext('2d');
     let weeklyChart;
 
+    function initializeChart() {
+        fetchDailyIncidences();
+        setInterval(fetchDailyIncidences, 10000);
+    }
+
     function fetchDailyIncidences() {
+        if (typeof Chart === 'undefined') {
+            console.error("Chart.js no está definido. Verifica que el archivo se cargó correctamente.");
+            return;
+        }
+
         fetch('/get_daily_incidences')
             .then(response => response.json())
             .then(data => {
                 const labels = Object.keys(data); // Fechas de los últimos 7 días
                 const incidences = Object.values(data); // Conteo de incidencias
-    
-                const neonColors = [
-                    'rgba(0, 255, 255, 0.7)', // Cian
-                    'rgba(0, 255, 128, 0.7)', // Verde Neón
-                    'rgba(255, 255, 0, 0.7)', // Amarillo Neón
-                    'rgba(255, 0, 128, 0.7)', // Rosa Neón
-                    'rgba(128, 0, 255, 0.7)', // Púrpura Neón
-                    'rgba(0, 128, 255, 0.7)', // Azul Neón
-                    'rgba(255, 128, 0, 0.7)', // Naranja Neón
-                ];
-    
-                const neonBorderColors = neonColors.map(color => color.replace('0.7', '1')); // Bordes opacos
-    
+
                 if (weeklyChart) {
                     // Actualizar gráfica existente
                     weeklyChart.data.labels = labels;
@@ -118,9 +140,9 @@ document.addEventListener("DOMContentLoaded", function () {
                             datasets: [{
                                 label: 'Incidencias Diarias',
                                 data: incidences,
-                                backgroundColor: neonColors,
-                                borderColor: neonBorderColors,
-                                borderWidth: 2,
+                                backgroundColor: 'rgba(99, 99, 99, 0.8)', // Barras en gris oscuro
+                                borderColor: 'rgba(150, 150, 150, 1)', // Bordes en gris claro
+                                borderWidth: 1,
                             }]
                         },
                         options: {
@@ -130,33 +152,29 @@ document.addEventListener("DOMContentLoaded", function () {
                                 legend: {
                                     display: true,
                                     labels: {
-                                        color: '#FFFFFF', // Color del texto de la leyenda
-                                        font: {
-                                            size: 14,
-                                        }
+                                        color: '#FFFFFF', // Color de la leyenda
                                     }
                                 }
                             },
                             scales: {
                                 x: {
                                     ticks: {
-                                        color: '#FFFFFF', // Color de los ticks en eje X
+                                        color: '#FFFFFF',
                                     },
                                     grid: {
-                                        color: 'rgba(255, 255, 255, 0.2)', // Líneas de cuadrícula
+                                        color: 'rgba(255, 255, 255, 0.1)',
                                     }
                                 },
                                 y: {
                                     ticks: {
-                                        color: '#FFFFFF', // Color de los ticks en eje Y
-                                        stepSize: 1, // Asegura que el incremento sea de 1 unidad
-                                        precision: 0, // Evita decimales
+                                        color: '#FFFFFF',
+                                        stepSize: 1,
                                     },
                                     grid: {
-                                        color: 'rgba(255, 255, 255, 0.2)', // Líneas de cuadrícula
+                                        color: 'rgba(255, 255, 255, 0.1)',
                                     },
-                                    min: 0, // Valor mínimo del eje Y
-                                    max: 10, // Valor máximo del eje Y
+                                    min: 0,
+                                    max: 10,
                                 }
                             },
                             layout: {
@@ -175,9 +193,4 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Error al obtener las incidencias diarias:", error);
             });
     }
-    
-
-    // Llamar a fetchDailyIncidences al cargar la página y actualizar cada 10 segundos
-    fetchDailyIncidences();
-    setInterval(fetchDailyIncidences, 10000);
 });
