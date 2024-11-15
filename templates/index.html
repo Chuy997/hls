@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battery Monitor</title>
+    <link rel="stylesheet" href="../static/styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="../static/hls.min.js" defer></script>
+    <script src="../static/script.js" defer></script>
+</head>
+<body>
+    <header class="header">
+        Battery Monitor
+    </header>
+    <div class="container">
+        <!-- Contenedor de Video -->
+        <div id="video-container">
+            <video id="videoPlayer" controls autoplay muted playsinline></video>
+        </div>
+        <!-- Barra lateral con Contador de Incidencias y Gráfica -->
+        <div class="sidebar">
+            <div class="incidence-section">
+                <h2>Contador de Incidencias</h2>
+                <div id="incidence-counter">
+                    Total de Incidencias: <span id="counter-value">0</span>
+                </div>
+            </div>
+            <div class="chart-section">
+                <h2>Incidencias Diarias (Últimos 7 días)</h2>
+                <canvas id="weeklyChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <footer class="footer">
+        Sistema de monitoreo de baterías y alarmas de incendio.
+    </footer>
+</body>
+</html>
